@@ -3,4 +3,7 @@ name = "research"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
+[workspace]
+members = ["merkle_tree"]
+
+[workspace.dependencies]
