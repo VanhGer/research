@@ -6,3 +6,6 @@ edition = "2021"
 [dependencies]
 ecies = {workspace = true}
 rand = {workspace = true}
+thiserror = {workspace = true}
+rrsa = { path = "../rsa-cryptography-rust" }
+num-bigint = { workspace = true, features = ["rand"] }

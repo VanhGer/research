@@ -6,7 +6,7 @@ use crate::encryption::{encrypt_password};
 use crate::password::{party_input_passwords, Password, PasswordPair};
 
 // Encrypted value for the output of the garbled gate.
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct EncryptedValue(pub Vec<u8>);
 
 // Represents the rows of the lookup table.
@@ -83,6 +83,7 @@ impl GarbledCircuit {
        match circuit {
            Input(PartyInput::A(x)) => passwords_a[*x as usize].clone(),
            Input(PartyInput::B(x)) => passwords_b[*x as usize].clone(),
+
            Gate(gate_info, left, right) => {
                let left_password_pair = self.garble(rng, left, passwords_a, passwords_b);
                let right_password_pair = self.garble(rng, right, passwords_a, passwords_b);
@@ -205,7 +206,7 @@ mod test {
     pub fn test_evaluate_garbled_circuit() {
         let and_circuit = Gate(GateInfo(0b1000), Box::new(Input(PartyInput::A(0))), Box::new(Input(PartyInput::B(0))));
         let mut rng = thread_rng();
-        let (mut garbled_circuit, passwords_a, passwords_b, final_password_pair) = garble_circuit(&mut rng, &and_circuit);
+        let (mut garbled_circuit, passwords_a, passwords_b, _) = garble_circuit(&mut rng, &and_circuit);
 
         let a_value = vec![1_u8];
         let b_value = vec![0_u8];

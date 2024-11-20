@@ -1,0 +1,3 @@
+[submodule "rsa-cryptography-rust"]
+	path = rsa-cryptography-rust
+	url = https://github.com/paulora2405/rsa-cryptography-rust.git

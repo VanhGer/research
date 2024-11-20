@@ -25,14 +25,14 @@ impl Password {
     pub fn serialize(&self) -> [u8;33] {
         let mut res = [0_u8;33];
         let sk_serialize = self.pass.serialize();
-        res[..32].copy_from_slice(&sk_serialize);
-        res[32] = self.position;
+        res[1..33].copy_from_slice(&sk_serialize);
+        res[0] = self.position;
         res
     }
 
     pub fn deserialize(bytes: &[u8;33]) -> Self {
-        let pass = SecretKey::parse(<&[u8; 32]>::try_from(&bytes[..32]).unwrap()).expect("Failed to deserialize SecretKey");
-        let position = bytes[32];
+        let pass = SecretKey::parse(<&[u8; 32]>::try_from(&bytes[1..33]).unwrap()).expect("Failed to deserialize SecretKey");
+        let position = bytes[0];
         Self { pass, position }
     }
 }
