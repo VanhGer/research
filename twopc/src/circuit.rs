@@ -1,17 +1,17 @@
 
 // Input for each party in the circuit.
-pub enum Input {
+pub enum PartyInput {
     A(u32),
     B(u32),
 }
 
 // Represents the information of the binary gate. We only needs 4 bits to represent the gate.
 // For example, the gate information for an AND gate would be 1000, for an OR gate would be 1110, etc.
-pub struct GateInfo(u8);
+pub struct GateInfo(pub(crate) u8);
 
 // Represents the circuit. It can be an input, a gate or a combination of gates.
 pub enum Circuit {
-    Input(Input),
+    Input(PartyInput),
     Gate(GateInfo, Box<Circuit>, Box<Circuit>),
 }
 
@@ -23,8 +23,8 @@ pub fn get_number_of_inputs(circuit: &Circuit) -> (u32, u32) {
     let mut num_b = 0;
 
     match circuit {
-        Circuit::Input(Input::A(x)) => num_a = *x,
-        Circuit::Input(Input::B(x)) => num_b = *x,
+        Circuit::Input(PartyInput::A(x)) => num_a = *x,
+        Circuit::Input(PartyInput::B(x)) => num_b = *x,
         Circuit::Gate(_, left, right) => {
             let (a0, b0) = get_number_of_inputs(left);
             let (a1, b1) = get_number_of_inputs(right);

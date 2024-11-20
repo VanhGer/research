@@ -1,16 +1,16 @@
 use ecies::SecretKey;
 use rand::{CryptoRng, RngCore};
-
 // Password $P_0$ or $P_1$ for each input.
+#[derive(Clone, Debug, PartialEq)]
 pub struct Password {
-    pass: SecretKey,
-    position: u8,
+    pub pass: SecretKey,
+    pub position: u8,
 }
 
 // Pair of passwords for each input.
+#[derive(Clone)]
 pub struct PasswordPair {
-    p0: Password,
-    p1: Password,
+    pub pair: [Password; 2]
 }
 
 impl Password {
@@ -21,13 +21,29 @@ impl Password {
             position,
         }
     }
+
+    pub fn serialize(&self) -> [u8;33] {
+        let mut res = [0_u8;33];
+        let sk_serialize = self.pass.serialize();
+        res[..32].copy_from_slice(&sk_serialize);
+        res[32] = self.position;
+        res
+    }
+
+    pub fn deserialize(bytes: &[u8;33]) -> Self {
+        let pass = SecretKey::parse(<&[u8; 32]>::try_from(&bytes[..32]).unwrap()).expect("Failed to deserialize SecretKey");
+        let position = bytes[32];
+        Self { pass, position }
+    }
 }
 
 impl PasswordPair {
     pub fn new<R: RngCore + CryptoRng>(rng: &mut R) -> Self {
         let p0 = Password::new(rng, 0);
         let p1 = Password::new(rng, 1);
-        Self { p0, p1 }
+        Self {
+            pair: [p0, p1]
+        }
     }
 }
 
