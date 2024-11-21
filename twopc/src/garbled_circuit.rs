@@ -1,7 +1,7 @@
-use rand::{thread_rng, CryptoRng, RngCore};
+use rand::{CryptoRng, RngCore};
 use crate::circuit::{get_number_of_inputs, Circuit, GateInfo, PartyInput};
 use crate::circuit::Circuit::{Gate, Input};
-use crate::decryption::{decrypt_to_password, garbled_gate_decryption};
+use crate::decryption::garbled_gate_decryption;
 use crate::encryption::{encrypt_password};
 use crate::password::{party_input_passwords, Password, PasswordPair};
 
@@ -117,7 +117,7 @@ impl GarbledCircuit {
     // Evaluate the garbled circuit  with the key passwords from parties.
     // Return a boolean value
     pub fn evaluate(&mut self, circuit: &Circuit, key_passwords_a: &[Password], key_passwords_b: &[Password]) -> bool{
-        let final_password = self.ungarbled(&circuit, key_passwords_a, key_passwords_b);
+        let final_password = self.ungarbled(circuit, key_passwords_a, key_passwords_b);
         final_password.position == 1
     }
 }
@@ -139,6 +139,8 @@ pub fn garble_circuit<R: RngCore + CryptoRng>(rng: &mut R, circuit: &Circuit)
 
 #[cfg(test)]
 mod test {
+    use rand::thread_rng;
+    use crate::decryption::decrypt_to_password;
     use super::*;
 
     #[test]
@@ -214,5 +216,4 @@ mod test {
         let res = garbled_circuit.evaluate(&and_circuit, &key_passwords_a, &key_passwords_b);
         assert_eq!(res, false);
     }
-
 }

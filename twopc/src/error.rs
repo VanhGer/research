@@ -14,4 +14,7 @@ pub enum OTError{
 
     #[error("The length of each gate maximum output is not matching.")]
     LengthNotMatch,
+
+    #[error("n public key sent by a party is invalid")]
+    InvalidNKeys,
 }

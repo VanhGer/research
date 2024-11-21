@@ -1,5 +1,4 @@
-use ecies::{decrypt, encrypt, PublicKey, SecretKey};
-use rand::{thread_rng};
+use ecies::{encrypt, PublicKey, SecretKey};
 use crate::garbled_circuit::EncryptedValue;
 use crate::password::Password;
 
@@ -22,14 +21,14 @@ pub fn encrypt_password(
     let secret_key = SecretKey::parse_slice(&out_scalar).unwrap();
     let public_key = PublicKey::from_secret_key(&secret_key);
     let pk=  &public_key.serialize();
-    let mut out_msg = out.serialize();
+    let out_msg = out.serialize();
     let encrypted_value = encrypt(pk, &out_msg).unwrap();
 
     EncryptedValue(encrypted_value)
 }
 #[test]
 pub fn test_encryption() {
-    let mut rng = thread_rng();
+    let mut rng = rand::thread_rng();
     let sk1 = SecretKey::random(&mut rng);
     let sk2 = SecretKey::random(&mut rng);
 
@@ -48,7 +47,7 @@ pub fn test_encryption() {
     println!("out: {:?}", out_msg);
     let encrypted_value = encrypt(pk, &out_msg).unwrap();
     println!("encrypted_value: {:?}", encrypted_value);
-    let plain_text_value = decrypt(sk, &encrypted_value).unwrap();
+    let plain_text_value = ecies::decrypt(sk, &encrypted_value).unwrap();
     println!("plain text: {:?}", plain_text_value);
     assert_eq!(out_msg.as_slice(), plain_text_value.as_slice());
     let password = Password::deserialize(<&[u8; 33]>::try_from(plain_text_value.as_slice()).unwrap());

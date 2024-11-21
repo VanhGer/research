@@ -7,7 +7,7 @@ pub enum PartyInput {
 
 // Represents the information of the binary gate. We only needs 4 bits to represent the gate.
 // For example, the gate information for an AND gate would be 1000, for an OR gate would be 1110, etc.
-pub struct GateInfo(pub(crate) u8);
+pub struct GateInfo(pub u8);
 
 // Represents the circuit. It can be an input, a gate or a combination of gates.
 pub enum Circuit {

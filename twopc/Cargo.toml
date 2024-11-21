@@ -3,6 +3,10 @@ name = "twopc"
 version = "0.1.0"
 edition = "2021"
 
+[[example]]
+name = "twopc-example"
+path = "examples/main.rs"
+
 [dependencies]
 ecies = {workspace = true}
 rand = {workspace = true}
