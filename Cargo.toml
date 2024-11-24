@@ -3,4 +3,11 @@ name = "research"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
+[workspace]
+members = ["twopc", "rsa-cryptography-rust"]
+
+[workspace.dependencies]
+ecies = "0.2.7"
+rand = "0.8.5"
+thiserror = "2.0.3"
+num-bigint = "0.4.6"
