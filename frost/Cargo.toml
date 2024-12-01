@@ -1,0 +1,13 @@
+[package]
+name = "frost"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rand = {workspace = true}
+ark-secp256k1 = { workspace = true, default-features = false }
+ark-ff = { workspace = true, default-features = false }
+ark-ec = { workspace = true, default-features = false }
+ark-poly = { version = "0.5.0", default-features = false }
+sha2 = {workspace = true}
+thiserror = {workspace = true}
