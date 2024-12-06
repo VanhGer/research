@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = ["twopc", "rsa-cryptography-rust"]
+members = ["twopc", "rsa-cryptography-rust", "cq"]
 
 [workspace.dependencies]
 ecies = "0.2.7"
