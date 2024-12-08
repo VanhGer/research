@@ -1,8 +1,7 @@
 use std::ops::{Add, Sub};
-use ark_ec::CurveGroup;
 use std::ops::Mul;
 use ark_ec::{pairing::Pairing, AffineRepr};
-use ark_ff::{UniformRand, Zero, One};
+use ark_ff::{UniformRand, One};
 use ark_poly::{DenseUVPolynomial, Polynomial};
 use ark_poly::univariate::DensePolynomial;
 use rand::thread_rng;
@@ -28,7 +27,7 @@ impl <P: Pairing> Kzg<P> {
         let mut g2_srs = Vec::new();
 
         let mut s_pow = P::ScalarField::one();
-        for i in 0..len {
+        for _ in 0..len {
             let g1_point = g1_gen.mul(s_pow);
             let g2_point = g2_gen.mul(s_pow);
             g1_srs.push(g1_point.into());

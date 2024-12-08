@@ -35,7 +35,7 @@ pub fn compute_quotient_lagrange_basic_commitments<P: Pairing>(l_i_commitments: 
     let mut res: Vec<P::G1Affine> = Vec::new();
     
     for (i, l_i_commitment) in l_i_commitments.iter().enumerate() {
-        let mut quotient_com = l_i_commitment.mul(domain.element(n - i));
+        let quotient_com = l_i_commitment.mul(domain.element(n - i));
         res.push((quotient_com + sub).into());
     }
     

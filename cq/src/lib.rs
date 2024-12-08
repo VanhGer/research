@@ -4,6 +4,8 @@ mod pre_compute;
 mod cq;
 mod prover;
 mod fiat_shamir;
+mod errors;
+mod verifier;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right

@@ -2,7 +2,7 @@
 use std::ops::Mul;
 use ark_ec::AffineRepr;
 use ark_ec::pairing::Pairing;
-use ark_poly::{DenseUVPolynomial, EvaluationDomain, GeneralEvaluationDomain, Polynomial};
+use ark_poly::{DenseUVPolynomial, EvaluationDomain, GeneralEvaluationDomain};
 use ark_poly::univariate::DensePolynomial;
 use ark_ff::Zero;
 pub struct ToeplitzMatrix <P: Pairing> {
