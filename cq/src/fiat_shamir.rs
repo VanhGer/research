@@ -37,6 +37,17 @@ impl <T: Digest + Default, P: Pairing> Script<T, P> {
         self.data = Some(hasher.finalize().to_vec());
         self.generated = false;
     }
+    
+    pub fn feed_with_field_elements(&mut self, field_elements: &[P::ScalarField]) {
+        let mut hasher = T::default();
+        hasher.update(self.data.take().unwrap_or_default());
+        for field_element in field_elements {
+            field_element.serialize_uncompressed(HashMarshaller(&mut hasher))
+                .expect("HashMarshaller::serialize_uncompressed should be infallible!");
+        }
+        self.data = Some(hasher.finalize().to_vec());
+        self.generated = false;
+    }
 
     fn generate_rng_with_seed(&mut self) -> StdRng {
         if self.generated {
@@ -89,7 +100,7 @@ mod tests {
     use crate::fiat_shamir::Script;
 
     #[test]
-    fn aggregation_digest_test() {
+    fn aggregation_digest_test_01() {
         let commitment1 =  G1Affine::generator().mul(Fr::from(1)).into_affine();
         let commitment2 =  G1Affine::generator().mul(Fr::from(2)).into_affine();
       
@@ -122,6 +133,41 @@ mod tests {
         assert_ne!(a, d, "should be different");
         assert_ne!(aa, dd, "should be different");
         assert_ne!(aaa, ddd, "should be different");
+    }
+    
+    #[test]
+    fn aggregation_digest_test_02() {
+        let field1 = Fr::from(1);
+        let field2 = Fr::from(2);
+
+        let commitments= [field1, field2];
+        let mut script1 = Script::<Sha256, Bls12_381>::new();
+        let mut script2 = Script::<Sha256, Bls12_381>::new();
+        let mut script3 = Script::<Sha256, Bls12_381>::new();
+        let mut script4 = Script::<Sha256, Bls12_381>::new();
+
+
+        script1.feed_with_commitments(&commitments);
+        let [a, aa, aaa] = script1.generate_challenges();
+
+        script2.feed_with_commitments(&[field2]);
+        let [b] =  script2.generate_challenges();
+        println!("b: {:?}", b);
+        assert_ne!(a, b, "should be different");
+
+        script3.feed_with_commitments(&commitments);
+        let [c, cc, ccc] = script3.generate_challenges();
+        assert_eq!(a, c, "should be equal");
+        assert_eq!(aa, cc, "should be equal");
+        assert_eq!(aaa, ccc, "should be equal");
+
+        script4.feed_with_commitments(&[field1]);
+        script4.feed_with_commitments(&[field2]);
+        let [d, dd, ddd] = script4.generate_challenges();
+        assert_ne!(a, d, "should be different");
+        assert_ne!(aa, dd, "should be different");
+        assert_ne!(aaa, ddd, "should be different");
+        
     }
 
     #[test]

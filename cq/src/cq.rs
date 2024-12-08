@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::ops::{Mul, Sub};
 use ark_ec::CurveGroup;
 use ark_ec::pairing::Pairing;
@@ -9,14 +10,14 @@ use crate::kzg::Kzg;
 use crate::pre_compute::{compute_quotient_lagrange_basic_commitments, fast_lagrange_basis_commitments_computation};
 
 pub struct Cq<P: Pairing> {
-    kzg: Kzg<P>,
-    big_n: usize,
-    z_v_2: P::G2Affine,
-    t_x: DensePolynomial<P::ScalarField>,
-    t_x_2: P::G2Affine,
-    q_i_1: Vec<P::G1Affine>,
-    l_i_1: Vec<P::G1Affine>,
-    l_i_quotient_1: Vec<P::G1Affine>,
+    pub kzg: Kzg<P>,
+    pub big_n: usize,
+    pub z_v_2: P::G2Affine,
+    pub t_hash_map: HashMap<P::ScalarField, usize>,
+    pub t_x_2: P::G2Affine,
+    pub cm1_qi: Vec<P::G1Affine>,
+    pub cm1_li: Vec<P::G1Affine>,
+    pub cm1_l_i_quotient: Vec<P::G1Affine>,
 }
 
 impl <P: Pairing> Cq<P> {
@@ -29,29 +30,34 @@ impl <P: Pairing> Cq<P> {
 
         let z_v_2: P::G2Affine = kzg.g2_srs[big_n].sub(kzg.g2_srs[0]).into();
 
+        let mut t_hash_map = HashMap::<P::ScalarField, usize>::new();
+        for (i, x) in t_i.iter().enumerate() {
+            t_hash_map.insert(*x, i);
+        }
+        
         let t_x_coeffs = domain.ifft(t_i);
         let t_x = DensePolynomial::from_coefficients_vec(t_x_coeffs);
         let t_x_2 = kzg.commit_g2(&t_x);
 
-        let q_i_1 = Self::compute_q_i_1(&domain, &t_x, &kzg.g1_srs);
+        let cm1_qi = Self::compute_cm1_qi(&domain, &t_x, &kzg.g1_srs);
 
-        let l_i_1 = fast_lagrange_basis_commitments_computation::<P>(&kzg.g1_srs, big_n);
+        let cm1_li = fast_lagrange_basis_commitments_computation::<P>(&kzg.g1_srs, big_n);
 
-        let l_i_quotient_1 = compute_quotient_lagrange_basic_commitments::<P>(&l_i_1, &kzg.g1_srs, big_n);
+        let cm1_l_i_quotient = compute_quotient_lagrange_basic_commitments::<P>(&cm1_li, &kzg.g1_srs, big_n);
 
         Self {
             kzg,
             big_n,
             z_v_2,
-            t_x,
+            t_hash_map,
             t_x_2,
-            q_i_1,
-            l_i_1,
-            l_i_quotient_1,
+            cm1_qi,
+            cm1_li,
+            cm1_l_i_quotient,
         }
     }
 
-    fn compute_q_i_1(domain: &GeneralEvaluationDomain<P::ScalarField>, t_x: &DensePolynomial<P::ScalarField>, srs_g1: &[P::G1Affine]) -> Vec<P::G1Affine> {
+    fn compute_cm1_qi(domain: &GeneralEvaluationDomain<P::ScalarField>, t_x: &DensePolynomial<P::ScalarField>, srs_g1: &[P::G1Affine]) -> Vec<P::G1Affine> {
         let big_n_inv = domain.size_as_field_element().inverse().unwrap();
         let toeplitz = ToeplitzMatrix::<P>::new(t_x);
         let hs: Vec<P::G1> = toeplitz.compute_h_coefficients(srs_g1);
