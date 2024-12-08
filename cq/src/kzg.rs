@@ -35,6 +35,7 @@ impl <P: Pairing> Kzg<P> {
             g2_srs.push(g2_point.into());
             s_pow = s_pow * s;
         }
+        g2_srs.push(g2_gen.mul(s_pow).into());
 
         Self {
             g1_srs,

@@ -7,9 +7,8 @@ use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
 // Compute the commitments of the Lagrange basis polynomials
 // in O(NLogN) curve operations using FFT
 // The algorithm in the section 3.3 of: https://eprint.iacr.org/2017/602.pdf
-pub fn fast_lagrange_basis_commitments_computation<P: Pairing>(srs: &[P::G1Affine]) -> Vec<P::G1Affine>{
+pub fn fast_lagrange_basis_commitments_computation<P: Pairing>(srs: &[P::G1Affine],  n: usize) -> Vec<P::G1Affine>{
     let coefficients = &srs[0..].iter().map(|s| s.into_group()).collect::<Vec<_>>();
-    let n = srs.len();
     let domain = GeneralEvaluationDomain::<P::ScalarField>::new(n).unwrap();
     
     let n_inv = domain.size_as_field_element().inverse().unwrap();
@@ -28,8 +27,7 @@ pub fn fast_lagrange_basis_commitments_computation<P: Pairing>(srs: &[P::G1Affin
 }
 
 // compute [(l_i(X) - l_i(0)) / X]_1 = g^-i· [L_i(X)]_1 - (1/N)·[x^(N-1)]_1
-pub fn compute_quotient_lagrange_basic_commitments<P: Pairing>(l_i_commitments: &[P::G1Affine], srs: &[P::G1Affine]) -> Vec<P::G1Affine> {
-    let n = l_i_commitments.len();
+pub fn compute_quotient_lagrange_basic_commitments<P: Pairing>(l_i_commitments: &[P::G1Affine], srs: &[P::G1Affine], n: usize) -> Vec<P::G1Affine> {
     let domain = GeneralEvaluationDomain::<P::ScalarField>::new(n).unwrap();
     let n_inv = domain.size_as_field_element().inverse().unwrap();
     let sub = srs[n-1].mul(-n_inv);
@@ -57,7 +55,7 @@ mod tests {
     #[test]
     fn test_fast_lagrange_basis_commitments_computation() {
         let kzg = Kzg::<Bls12_381>::new(8);
-        let lagrange_basis_commitment_affines = fast_lagrange_basis_commitments_computation::<Bls12_381>(&kzg.g1_srs);
+        let lagrange_basis_commitment_affines = fast_lagrange_basis_commitments_computation::<Bls12_381>(&kzg.g1_srs, 8);
 
         let domain = GeneralEvaluationDomain::<Fr>::new(8).unwrap();
 
@@ -75,8 +73,8 @@ mod tests {
     #[test]
     fn test_quotient_lagrange_basis() {
         let kzg = Kzg::<Bls12_381>::new(8);
-        let lagrange_basis_commitment_affines = fast_lagrange_basis_commitments_computation::<Bls12_381>(&kzg.g1_srs);
-        let quotient_lagrange_basis_commitments = compute_quotient_lagrange_basic_commitments::<Bls12_381>(&lagrange_basis_commitment_affines, &kzg.g1_srs);
+        let lagrange_basis_commitment_affines = fast_lagrange_basis_commitments_computation::<Bls12_381>(&kzg.g1_srs, 8);
+        let quotient_lagrange_basis_commitments = compute_quotient_lagrange_basic_commitments::<Bls12_381>(&lagrange_basis_commitment_affines, &kzg.g1_srs, 8);
         
         let domain = GeneralEvaluationDomain::<Fr>::new(8).unwrap();
         let n = 8;
