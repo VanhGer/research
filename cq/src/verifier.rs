@@ -118,6 +118,98 @@ impl <T: Digest + Default, P: Pairing> Verifier<T, P> {
         
         Ok(true)
     }
+
+
+    // batched verify: https://aztec.slides.com/suyashbagad_aztec/cq-lookup#/6/0/11
+    pub fn batched_verify(&mut self, t_i: &[P::ScalarField], cq: &Cq<P>, proof: Proof<P>) -> Result<bool, VerifierError> {
+        let Proof {
+            small_n,
+            cm1_f,
+            cm1_m,
+            cm1_a,
+            cm1_q_a,
+            cm1_b_0,
+            cm1_q_b,
+            cm1_p,
+            b_0_gamma,
+            f_gamma,
+            a_0,
+            cm1_pi_eta,
+            cm1_a_0_x,
+        } = proof;
+
+        if !small_n.is_power_of_two() {
+            return Err(VerifierError::WitnessSizeNotPowerOf2);
+        } else if !t_i.len().is_power_of_two() {
+            return Err(VerifierError::TableSizeNotPowerOf2);
+        }
+
+
+        self.script.feed_with_commitments(&[cm1_f]);
+        self.script.feed_with_commitments(&[cm1_m]);
+
+        // Round 2
+        let [beta] = self.script.generate_challenges();
+
+        self.script.feed_with_commitments(&[
+            cm1_a,
+            cm1_q_a,
+            cm1_b_0,
+            cm1_q_b,
+            cm1_p,
+        ]);
+
+
+        let cm2_1 = cq.kzg.commit_g2(&DensePolynomial::from_coefficients_vec(vec![P::ScalarField::one()]));
+        let mut x_pow = vec![P::ScalarField::zero(); cq.big_n - 1 - (small_n - 2)];
+        x_pow.push(P::ScalarField::one());
+        let x_pow_poly = DensePolynomial::from_coefficients_vec(x_pow);
+        let cm2_x_pow = cq.kzg.commit_g2(&x_pow_poly);
+        // Round 3
+        let [gamma] = self.script.generate_challenges();
+        self.script.feed_with_commitments(&[b_0_gamma, f_gamma, a_0]);
+        // compute b_0:
+        let n_inv = P::ScalarField::from(small_n as u128).inverse().unwrap();
+        let b_0 = P::ScalarField::from(cq.big_n as u128) * a_0 * n_inv;
+        // compute z_h(gamma), b_gamma, q_b_gamma
+        let z_h_gamma = gamma.pow(&[small_n as u64]) - P::ScalarField::one();
+        let z_h_gamma_inv = z_h_gamma.inverse().unwrap();
+        let b_gamma = b_0_gamma * gamma + b_0;
+        let q_b_gamma = (b_gamma * (f_gamma + beta) - P::ScalarField::one()) * z_h_gamma_inv;
+
+        // Step 6
+        let [eta] = self.script.generate_challenges();
+        let v = b_0_gamma + eta * f_gamma + eta * eta * q_b_gamma;
+        let cm1_c = cm1_b_0 + cm1_f.mul(eta) + cm1_q_b.mul(eta * eta);
+        let x_poly = DensePolynomial::from_coefficients_vec(vec![P::ScalarField::zero(), P::ScalarField::one()]);
+        let cm2_x = cq.kzg.commit_g2(&x_poly);
+        let cm1_v = cq.kzg.commit_g1(&DensePolynomial::from_coefficients_vec(vec![v]));
+
+        let a_0_poly = DensePolynomial::from_coefficients_vec(vec![a_0]);
+        let cm1_a_0 = cq.kzg.commit_g1(&a_0_poly);
+
+        // batch commitments
+        self.script.feed_with_commitments(&[cm1_pi_eta, cm1_a_0_x]);
+        let [mu] = self.script.generate_challenges();
+        let mut mu_powers = [P::ScalarField::one(); 5];
+        for i in 1..5 {
+            mu_powers[i] = mu_powers[i - 1] * mu;
+        }
+        // test
+        let lhs_1 = cm1_c.sub(cm1_v).add(cm1_pi_eta.mul(gamma).into())
+            .add(cm1_a.mul(mu_powers[1]).into()).sub(cm1_a_0.mul(mu_powers[1]).into());
+        let rhs_1 = cm1_pi_eta.add(cm1_a_0_x.mul(mu_powers[1]).into());
+        let lhs_2 = lhs_1.add(cm1_p.mul(mu_powers[2]).into());
+        let lhs_3 = lhs_2 + (cm1_m - cm1_a.mul(beta)).mul(mu_powers[3]).into();
+        let lhs = P::pairing(lhs_3, cm2_1);
+        let rhs = P::multi_pairing(
+            [rhs_1.into(), cm1_b_0.mul(mu_powers[2]).into(), cm1_a.mul(mu_powers[3]).into(), cm1_q_a.mul(-mu_powers[3]).into()],
+            [cm2_x, cm2_x_pow, cq.t_x_2, cq.z_v_2]
+        );
+        assert_eq!(lhs, rhs, "Failed to verify proof");
+
+        Ok(true)
+    }
     
 }
 
@@ -145,6 +237,20 @@ mod tests {
 
         let mut verifier = Verifier::<Sha256, Bls12_381>::new();
         let result = verifier.verify(&t_i, &cq, proof);
+        assert!(result.is_ok());
+        assert!(result.unwrap());
+    }
+
+    #[test]
+    fn test_batched_verify() {
+        let t_i = vec![Fr::from(1), Fr::from(2), Fr::from(3), Fr::from(4)];
+        let f_i = vec![Fr::from(1), Fr::from(3), Fr::from(3), Fr::from(3)];
+        let cq = Cq::<Bls12_381>::new(&t_i).unwrap();
+        let mut prover = Prover::<Sha256, Bls12_381>::new(f_i).unwrap();
+        let proof = prover.prove(&cq, &t_i).unwrap();
+
+        let mut verifier = Verifier::<Sha256, Bls12_381>::new();
+        let result = verifier.batched_verify(&t_i, &cq, proof);
         assert!(result.is_ok());
         assert!(result.unwrap());
     }
