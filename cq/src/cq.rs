@@ -4,7 +4,7 @@ use ark_ec::pairing::Pairing;
 use ark_ff::Field;
 use ark_poly::{DenseUVPolynomial, EvaluationDomain, GeneralEvaluationDomain};
 use ark_poly::univariate::DensePolynomial;
-use crate::errors::CqError;
+use crate::errors::GeneralError;
 use crate::feist_khovratovich_alg::ToeplitzMatrix;
 use crate::kzg::Kzg;
 use crate::pre_compute::{compute_quotient_lagrange_basic_commitments, fast_lagrange_basis_commitments_computation};
@@ -21,11 +21,12 @@ pub struct Cq<P: Pairing> {
 }
 
 impl <P: Pairing> Cq<P> {
-    pub fn new(t_i: &[P::ScalarField]) -> Result<Self, CqError> {
+    pub fn new(t_i: &[P::ScalarField]) -> Result<Self, GeneralError> {
         let big_n = t_i.len();
         if !big_n.is_power_of_two() {
-            return Err(CqError::TableSizeNotPowerOf2);
+            return Err(GeneralError::TableSizeNotPowerOf2);
         }
+
         
         let domain = GeneralEvaluationDomain::<P::ScalarField>::new(big_n).unwrap();
         let kzg = Kzg::<P>::new(big_n);
@@ -34,6 +35,9 @@ impl <P: Pairing> Cq<P> {
         
         let mut t_hash_map = HashMap::<P::ScalarField, usize>::new();
         for (i, x) in t_i.iter().enumerate() {
+            if t_hash_map.get(x).is_some() {
+                return Err(GeneralError::ElementsNotUnique);
+            }
             t_hash_map.insert(*x, i);
         }
         
@@ -41,12 +45,17 @@ impl <P: Pairing> Cq<P> {
         let t_x = DensePolynomial::from_coefficients_vec(t_x_coeffs);
         let t_x_2 = kzg.commit_g2(&t_x);
 
+        // let start = std::time::Instant::now();
         let cm1_qi = Self::compute_cm1_qi(&domain, &t_x, &kzg.g1_srs);
+        // println!("Time to create cm1_qi: {:?}", start.elapsed());
 
+        // let start = std::time::Instant::now();
         let cm1_li = fast_lagrange_basis_commitments_computation::<P>(&kzg.g1_srs, big_n);
+        // println!("Time to create cm1_li: {:?}", start.elapsed());
 
+        // let start = std::time::Instant::now();
         let cm1_l_i_quotient = compute_quotient_lagrange_basic_commitments::<P>(&cm1_li, &kzg.g1_srs, big_n);
-
+        // println!("Time to create cm1_l_i_quotient: {:?}", start.elapsed());
         Ok(Self {
             kzg,
             big_n,

@@ -7,7 +7,7 @@ use ark_poly::{DenseUVPolynomial};
 use ark_poly::univariate::DensePolynomial;
 use sha2::Digest;
 use crate::cq::Cq;
-use crate::errors::VerifierError;
+use crate::errors::GeneralError;
 use crate::fiat_shamir::Script;
 use crate::prover::Proof;
 
@@ -22,7 +22,7 @@ impl <T: Digest + Default, P: Pairing> Verifier<T, P> {
         }
     }
     
-    pub fn verify(&mut self, t_i: &[P::ScalarField], cq: &Cq<P>, proof: Proof<P>) -> Result<bool, VerifierError> {
+    pub fn verify(&mut self, t_i: &[P::ScalarField], cq: &Cq<P>, proof: Proof<P>) -> Result<bool, GeneralError> {
         let Proof {
             small_n,
             cm1_f,
@@ -40,9 +40,9 @@ impl <T: Digest + Default, P: Pairing> Verifier<T, P> {
         } = proof;
         
         if !small_n.is_power_of_two() {
-            return Err(VerifierError::WitnessSizeNotPowerOf2);
+            return Err(GeneralError::WitnessSizeNotPowerOf2);
         } else if !t_i.len().is_power_of_two() {
-            return Err(VerifierError::TableSizeNotPowerOf2);
+            return Err(GeneralError::TableSizeNotPowerOf2);
         }
         
         
@@ -121,7 +121,7 @@ impl <T: Digest + Default, P: Pairing> Verifier<T, P> {
 
 
     // batched verify: https://aztec.slides.com/suyashbagad_aztec/cq-lookup#/6/0/11
-    pub fn batched_verify(&mut self, t_i: &[P::ScalarField], cq: &Cq<P>, proof: Proof<P>) -> Result<bool, VerifierError> {
+    pub fn batched_verify(&mut self, t_i: &[P::ScalarField], cq: &Cq<P>, proof: Proof<P>) -> Result<bool, GeneralError> {
         let Proof {
             small_n,
             cm1_f,
@@ -139,9 +139,9 @@ impl <T: Digest + Default, P: Pairing> Verifier<T, P> {
         } = proof;
 
         if !small_n.is_power_of_two() {
-            return Err(VerifierError::WitnessSizeNotPowerOf2);
+            return Err(GeneralError::WitnessSizeNotPowerOf2);
         } else if !t_i.len().is_power_of_two() {
-            return Err(VerifierError::TableSizeNotPowerOf2);
+            return Err(GeneralError::TableSizeNotPowerOf2);
         }
 
 

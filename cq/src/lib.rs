@@ -1,11 +1,11 @@
-pub mod kzg;
-pub mod feist_khovratovich_alg;
+mod kzg;
+mod feist_khovratovich_alg;
 mod pre_compute;
-mod cq;
-mod prover;
+pub mod cq;
+pub mod prover;
 mod fiat_shamir;
 mod errors;
-mod verifier;
+pub mod verifier;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right

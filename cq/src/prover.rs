@@ -9,7 +9,7 @@ use ark_poly::GeneralEvaluationDomain;
 use ark_poly::univariate::DensePolynomial;
 use sha2::Digest;
 use crate::cq::Cq;
-use crate::errors::ProverError;
+use crate::errors::GeneralError;
 use crate::fiat_shamir::Script;
 
 pub struct Prover<T: Digest + Default, P: Pairing> {
@@ -58,9 +58,9 @@ pub struct Proof<P: Pairing> {
 
 
 impl <T: Digest + Default, P: Pairing> Prover<T, P> {
-    pub fn new(f_i: Vec<P::ScalarField>) -> Result<Self, ProverError> {
+    pub fn new(f_i: Vec<P::ScalarField>) -> Result<Self, GeneralError> {
         if !f_i.len().is_power_of_two() {
-            return Err(ProverError::WitnessSizeNotPowerOf2);
+            return Err(GeneralError::WitnessSizeNotPowerOf2);
         }
         let mut hash_map = HashMap::<P::ScalarField, usize>::new();
         for (_, f) in f_i.iter().enumerate() {
@@ -104,7 +104,7 @@ impl <T: Digest + Default, P: Pairing> Prover<T, P> {
         &self,
         cq: &Cq<P>, f_x: &DensePolynomial<P::ScalarField>,
         m_i_vec: &[(usize, usize)], t_i: &[P::ScalarField], beta: P::ScalarField
-    ) -> Result<RoundTwoResponse<P>, ProverError>
+    ) -> Result<RoundTwoResponse<P>, GeneralError>
     {
         // Step 2 3 4
         // A_1 = Σ cm1_li * m_i / (t_i + beta) =  Σ cm1_li * a_i
@@ -148,7 +148,7 @@ impl <T: Digest + Default, P: Pairing> Prover<T, P> {
         let (q_b_x, rem) = tmp.divide_by_vanishing_poly(domain);
 
         if !rem.is_zero() {
-            return Err(ProverError::CannotDivideByVanishingPolynomial);
+            return Err(GeneralError::CannotDivideByVanishingPolynomial);
         }
 
         // Step 9
@@ -184,7 +184,7 @@ impl <T: Digest + Default, P: Pairing> Prover<T, P> {
         q_b_x: &DensePolynomial<P::ScalarField>,
         f_x: &DensePolynomial<P::ScalarField>, b_0_x: &DensePolynomial<P::ScalarField>,
         a_sparse: &[(P::ScalarField, usize)]
-    ) -> Result<RoundThreeResponse<P>, ProverError> 
+    ) -> Result<RoundThreeResponse<P>, GeneralError> 
     {
         let small_n = self.f_i.len();
 
@@ -225,7 +225,7 @@ impl <T: Digest + Default, P: Pairing> Prover<T, P> {
         })
 
     }
-    pub fn prove(&mut self, cq: &Cq<P>, t_i: &[P::ScalarField]) -> Result<Proof<P>, ProverError>{
+    pub fn prove(&mut self, cq: &Cq<P>, t_i: &[P::ScalarField]) -> Result<Proof<P>, GeneralError>{
         
         let (f_x, cm1_f) = self.compute_cm1_fx(cq);
 
@@ -236,7 +236,7 @@ impl <T: Digest + Default, P: Pairing> Prover<T, P> {
             if let Some(&index) = cq.t_hash_map.get(&f_i) {
                 m_i_vec.push((index, value));
             } else {
-                return Err(ProverError::WitnessNotInTable);
+                return Err(GeneralError::WitnessNotInTable);
             }
         }
 
