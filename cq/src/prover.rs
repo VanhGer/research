@@ -7,6 +7,7 @@ use ark_ec::pairing::Pairing;
 use ark_ff::Zero;
 use ark_poly::GeneralEvaluationDomain;
 use ark_poly::univariate::DensePolynomial;
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress};
 use sha2::Digest;
 use crate::cq::Cq;
 use crate::errors::GeneralError;
@@ -40,6 +41,7 @@ struct RoundThreeResponse<P: Pairing> {
     cm1_a_0_x: P::G1Affine,
 }
 
+#[derive(Debug, Clone, CanonicalDeserialize, CanonicalSerialize)]
 pub struct Proof<P: Pairing> {
     pub small_n: usize, 
     pub cm1_f: P::G1Affine,
@@ -54,6 +56,24 @@ pub struct Proof<P: Pairing> {
     pub a_0: P::ScalarField,
     pub cm1_pi_eta: P::G1Affine,
     pub cm1_a_0_x: P::G1Affine,
+}
+
+impl <P: Pairing> Proof<P> {
+    pub fn serialized_size(&self, compress: Compress) -> usize{
+        self.small_n.serialized_size(compress) 
+            + self.cm1_f.serialized_size(compress)
+            + self.cm1_m.serialized_size(compress)
+            + self.cm1_a.serialized_size(compress)
+            + self.cm1_q_a.serialized_size(compress)
+            + self.cm1_b_0.serialized_size(compress)
+            + self.cm1_q_b.serialized_size(compress)
+            + self.cm1_p.serialized_size(compress)
+            + self.b_0_gamma.serialized_size(compress)
+            + self.f_gamma.serialized_size(compress)
+            + self.a_0.serialized_size(compress)
+            + self.cm1_pi_eta.serialized_size(compress)
+            + self.cm1_a_0_x.serialized_size(compress)
+    }
 }
 
 

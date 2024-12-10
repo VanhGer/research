@@ -18,3 +18,32 @@ ark-bls12-381 = {workspace = true}
 sha2 = {workspace = true}
 thiserror = {workspace = true}
 ark-bn254 = "0.5.0"
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "cq_times"
+path = "benches/cq_times.rs"
+harness = false
+
+[[bench]]
+name = "proving_times"
+path = "benches/proving_times.rs"
+harness = false
+
+[[bench]]
+name = "verifying_times"
+path = "benches/verifying_times.rs"
+harness = false
+
+[[bench]]
+name = "batch_verifying_times"
+path = "benches/batch_verifying_times.rs"
+harness = false
+
+[[bench]]
+name = "proof_size"
+path = "benches/proof_size.rs"
+harness = false
+
