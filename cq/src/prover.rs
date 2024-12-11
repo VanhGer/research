@@ -175,10 +175,8 @@ impl <T: Digest + Default, P: Pairing> Prover<T, P> {
         let cm1_q_b = cq.kzg.commit_g1(&q_b_x);
 
         // Step 10
-        let mut p_x_coeffs = vec![P::ScalarField::zero(); cq.big_n - 1 - (small_n - 2)];
-        p_x_coeffs.extend_from_slice(&b_0_x.coeffs);
-        let p_x = DensePolynomial::from_coefficients_slice(&p_x_coeffs);
-        let cm1_p = cq.kzg.commit_g1(&p_x);
+        let index = cq.big_n - 1 - (small_n - 2);
+        let cm1_p = cq.kzg.fast_commit_g1(&b_0_x, index);
 
         Ok(RoundTwoResponse {
             b_x,

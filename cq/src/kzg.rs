@@ -42,11 +42,22 @@ impl <P: Pairing> Kzg<P> {
         }
     }
     
+    
     // Commit a polynomial with SRS in G1
     pub fn commit_g1(&self, dense_polynomial: &DensePolynomial<P::ScalarField>) -> P::G1Affine {
         assert!(self.g1_srs.len() > dense_polynomial.degree());
         let poly_coeffs = dense_polynomial.coeffs.iter();
         let g1_points = self.g1_srs.iter();
+        let res = poly_coeffs.zip(g1_points).map(|(coeff, point)| {
+            point.mul(coeff).into()
+        }).reduce(|acc, point| acc.add(point).into()).unwrap_or(P::G1Affine::zero());
+        res
+    }
+    
+    pub fn fast_commit_g1(&self, dense_polynomial: &DensePolynomial<P::ScalarField>, index: usize) -> P::G1Affine {
+        assert!(self.g1_srs.len() > dense_polynomial.degree() + index);
+        let poly_coeffs = dense_polynomial.coeffs.iter();
+        let g1_points = self.g1_srs.iter().skip(index);
         let res = poly_coeffs.zip(g1_points).map(|(coeff, point)| {
             point.mul(coeff).into()
         }).reduce(|acc, point| acc.add(point).into()).unwrap_or(P::G1Affine::zero());
