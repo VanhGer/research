@@ -6,6 +6,9 @@ This implementation is based on the paper [CQ](https://eprint.iacr.org/2022/1763
 I followed the flow of its official [implementation](https://github.com/geometryxyz/cq), 
 but I made a lot of changes to enhance readability and ease of understanding.
 
+You can read my blog post about this implementation 
+[here](https://vanhger.github.io/Cryptography/ZKP/2024-12-11-cache-quotients.html).
+
 ## Usage
 
 You can see example usage in the `examples` directory. 
